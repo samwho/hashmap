@@ -1,12 +1,17 @@
 package uk.co.samwho.hashmap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class HashMap<K, V> implements Map<K, V> {
     private final double loadFactor;
     private final double resizeFactor;
     private int currentCapacity;
+    private int size;
 
     private List<List<Map.Entry<K, V>>> buckets;
 
@@ -28,6 +33,8 @@ public final class HashMap<K, V> implements Map<K, V> {
         for (int i = 0; i < initialCapacity; i++) {
             this.buckets.add(new ArrayList<>());
         }
+
+        this.size = 0;
     }
 
     private static final class Entry<K, V> implements Map.Entry<K, V> {
@@ -57,11 +64,11 @@ public final class HashMap<K, V> implements Map<K, V> {
     }
 
     public int size() {
-        return buckets.stream().mapToInt(List::size).sum();
+        return this.size;
     }
 
     public boolean isEmpty() {
-        return buckets.stream().allMatch(List::isEmpty);
+        return this.size == 0;
     }
 
     public boolean containsKey(Object key) {
@@ -97,10 +104,15 @@ public final class HashMap<K, V> implements Map<K, V> {
         V ret = put(buckets, key, value);
 
         synchronized (this) {
+            if (ret == null) {
+                this.size++;
+            }
+
             if (isResizeNeeded()) {
                 resize();
             }
         }
+
         return ret;
     }
 
@@ -122,6 +134,7 @@ public final class HashMap<K, V> implements Map<K, V> {
             return null;
         }
 
+        this.size--;
         return bucket.remove(i).getValue();
     }
 
@@ -130,6 +143,7 @@ public final class HashMap<K, V> implements Map<K, V> {
     }
 
     public void clear() {
+        this.size = 0;
         buckets.clear();
     }
 
@@ -146,7 +160,7 @@ public final class HashMap<K, V> implements Map<K, V> {
     }
 
     private boolean isResizeNeeded() {
-        return size() > (int)(currentCapacity * loadFactor);
+        return this.size > (int)(currentCapacity * loadFactor);
     }
 
     private void resize() {
@@ -161,9 +175,14 @@ public final class HashMap<K, V> implements Map<K, V> {
         }
 
         buckets = newBuckets;
+        currentCapacity = newCapacity;
     }
 
     private static <K, V> V put(List<List<Map.Entry<K, V>>> buckets, K key, V value) {
+        if (value == null) {
+            throw new IllegalArgumentException("cannot store null values");
+        }
+
         int hash = key.hashCode();
         List<Map.Entry<K, V>> bucket = buckets.get(hash % buckets.size());
 
