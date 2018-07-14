@@ -1,11 +1,12 @@
 package uk.co.samwho.hashmap;
 
-import com.google.common.collect.Iterables;
-import org.junit.jupiter.api.Test;
+import static com.google.common.truth.Truth.assertThat;
 
 import java.util.Map;
 
-import static com.google.common.truth.Truth.assertThat;
+import com.google.common.collect.Iterables;
+
+import org.junit.jupiter.api.Test;
 
 public class MapTest {
     private final Map<String, String> underTest = new HashMap<>();
